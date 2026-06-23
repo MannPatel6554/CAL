@@ -8,7 +8,7 @@ const authenticateToken = require('./middleware/auth');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 10000;
 const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_for_schedule_notifier_123!';
 
 app.use(cors());
