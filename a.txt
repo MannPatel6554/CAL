@@ -1,0 +1,53 @@
+((
+
+Readme.md
+)) 
+/goal ((Build a **fully functional, minimal MVP** web app called "Schedule Notifier."
+Do NOT add any feature beyond what is listed below. If you are tempted to add
+extra polish, recurring events, sharing, themes, or any "nice to have," skip
+it — this is a strict core-features-only build.
+
+## Stack (use exactly this, no substitutions)
+- Frontend: React (Vite) + Tailwind CSS
+- Backend: Node.js + Express (real REST API, not a serverless/BaaS wrapper)
+- Database: Supabase (use Mongodb only if Supabase isn't available locally)
+- Auth: JWT-based email/password auth, passwords hashed with bcrypt or AES encryption
+- Alerts: react-toastify for in-app toast + native browser Notification API
+- Scheduler trigger: client-side `setInterval` (60s) calling a backend endpoint
+
+## Core features only
+1. Register / Login (JWT issued, stored in memory or httpOnly cookie)
+2. Create / Read / Update / Delete personal calendar events (title, date, time)
+3. A simple 7x5 grid calendar view (no external calendar library)
+4. Every 60 seconds, frontend polls backend for events due "now" and fires:
+   - an in-app toast notification
+   - a native OS notification (if permission granted)
+5. All event data must be scoped per-user — enforced in backend query logic,
+   not just hidden in the UI.
+
+## Hard requirements — do not skip these
+1. **Show the full FE → BE → DB pipeline explicitly.** Every API call from
+   React must go through an Express route, which must run an actual SQL
+   query against the database. Do not use an all-in-one Supabase — I want to see real backend route handlers and real SQL.
+2. **At the end of the build, output a report containing:**
+   - A full list of every API endpoint created (method + path + one-line purpose)
+   - A full list of every frontend route/page created and what each does
+   - A description of the backend route logic for each endpoint (what it
+     validates, what query it runs, what it returns)
+   - An estimate of the computational footprint of the running app: expected
+     memory/CPU usage of the Node server at idle and under light load (a
+     handful of users polling every 60s), expected DB query load per minute,
+     and whether this can run comfortably on a small/free-tier instance
+     (e.g. 512MB RAM container) or needs more.
+3. Keep the codebase small enough that every file's purpose is obvious —
+   prefer fewer files with clear responsibility over excessive abstraction.
+4. No placeholder/fake data wiring — every UI action must actually hit the
+   backend and the backend must actually hit the database. "No mocked
+   responses."
+
+## Deliverable
+A working app I can run locally with clear setup steps (env vars, migration
+command, start command for backend and frontend), satisfying every point
+above, followed by the endpoint/route/compute report described in requirement 2.))
+
+must deeply analyze and refer every aspect of Readme.md present ...
