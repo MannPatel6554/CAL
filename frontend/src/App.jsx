@@ -561,7 +561,7 @@ export default function App() {
         {!apiOnline && (
           <div className="bg-red-600/95 text-white text-center py-2 px-4 text-xs font-semibold flex items-center justify-center gap-2 z-50 sticky top-0 backdrop-blur-sm animate-pulse shadow-md">
             <AlertCircle className="w-4 h-4 flex-shrink-0" />
-            <span>Cannot connect to backend server. Make sure the Node server is running on port 5000.</span>
+            <span>Cannot connect to backend server. API: {API_BASE}</span>
           </div>
         )}
         
@@ -694,7 +694,7 @@ export default function App() {
       {!apiOnline && (
         <div className="bg-red-600/90 text-white text-center py-2 px-4 text-xs font-semibold flex items-center justify-center gap-2 z-50 sticky top-0 backdrop-blur-sm animate-pulse shadow-md">
           <AlertCircle className="w-4 h-4 flex-shrink-0" />
-          <span>Cannot connect to backend server. Make sure the Node server is running on port 5000.</span>
+          <span>Cannot connect to backend server. API: {API_BASE}</span>
         </div>
       )}
       {/* Navbar */}
