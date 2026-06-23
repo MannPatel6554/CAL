@@ -36,43 +36,45 @@ app.post('/api/auth/register', async (req, res) => {
   }
 
   try {
-    // Check if user already exists
-    const { data: existingUsers, error: selectError } = await supabase
+    // Call Supabase Auth to register user (will trigger verification email if enabled)
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password
+    });
+
+    if (authError) {
+      console.error('Supabase auth signUp error:', authError);
+      return res.status(400).json({ error: authError.message });
+    }
+
+    const user = authData.user;
+    if (!user) {
+      return res.status(500).json({ error: 'Failed to create user session' });
+    }
+
+    // Keep public.users table synchronized.
+    const { data: existingUser } = await supabase
       .from('users')
-      .select('*')
-      .eq('email', email);
+      .select('id')
+      .eq('id', user.id)
+      .maybeSingle();
 
-    if (selectError) {
-      console.error('Database selection error:', selectError);
-      return res.status(500).json({ error: 'Database query failed' });
+    if (!existingUser) {
+      // Create a row in public.users table matching the auth user id
+      const { error: dbInsertError } = await supabase
+        .from('users')
+        .insert([{ id: user.id, email, password_hash: 'SUPABASE_AUTH' }]);
+
+      if (dbInsertError) {
+        console.error('Database insertion error syncing user:', dbInsertError);
+      }
     }
 
-    if (existingUsers && existingUsers.length > 0) {
-      return res.status(400).json({ error: 'User with this email already exists' });
-    }
-
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    // Insert user
-    const { data: newUser, error: insertError } = await supabase
-      .from('users')
-      .insert([{ email, password_hash: hashedPassword }])
-      .select();
-
-    if (insertError) {
-      console.error('Database insertion error:', insertError);
-      return res.status(500).json({ error: 'Failed to create user' });
-    }
-
-    const user = newUser[0];
     res.status(201).json({
-      message: 'User registered successfully',
+      message: 'Registration successful! Please check your email to verify your account before logging in.',
       user: {
         id: user.id,
-        email: user.email,
-        created_at: user.created_at
+        email: user.email
       }
     });
   } catch (error) {
@@ -90,27 +92,33 @@ app.post('/api/auth/login', async (req, res) => {
   }
 
   try {
-    // Find user
-    const { data: users, error: selectError } = await supabase
+    // Authenticate using Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (authError) {
+      console.error('Supabase auth signIn error:', authError);
+      return res.status(400).json({ error: authError.message });
+    }
+
+    const user = authData.user;
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
+    // Ensure user exists in our local public.users sync table
+    const { data: existingUser } = await supabase
       .from('users')
-      .select('*')
-      .eq('email', email);
+      .select('id')
+      .eq('id', user.id)
+      .maybeSingle();
 
-    if (selectError) {
-      console.error('Database selection error:', selectError);
-      return res.status(500).json({ error: 'Database query failed' });
-    }
-
-    if (!users || users.length === 0) {
-      return res.status(400).json({ error: 'Invalid email or password' });
-    }
-
-    const user = users[0];
-
-    // Check password
-    const validPassword = await bcrypt.compare(password, user.password_hash);
-    if (!validPassword) {
-      return res.status(400).json({ error: 'Invalid email or password' });
+    if (!existingUser) {
+      await supabase
+        .from('users')
+        .insert([{ id: user.id, email, password_hash: 'SUPABASE_AUTH' }]);
     }
 
     // Create JWT

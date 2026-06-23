@@ -54,6 +54,48 @@ export default function App() {
   const [todos, setTodos] = useState([]);
   const [newTodoTitle, setNewTodoTitle] = useState('');
 
+  // Email verification success states
+  const [showVerificationSuccess, setShowVerificationSuccess] = useState(false);
+  const [verificationError, setVerificationError] = useState('');
+
+  // Handle email verification redirect parameters on mount
+  useEffect(() => {
+    const hash = window.location.hash;
+    const search = window.location.search;
+    
+    let isSignup = false;
+    let errorMsg = '';
+
+    if (hash) {
+      const hashParams = new URLSearchParams(hash.substring(1));
+      if (hashParams.get('type') === 'signup') {
+        isSignup = true;
+      }
+      if (hashParams.get('error_description')) {
+        errorMsg = hashParams.get('error_description');
+      }
+    }
+
+    if (search) {
+      const searchParams = new URLSearchParams(search);
+      if (searchParams.get('type') === 'signup') {
+        isSignup = true;
+      }
+      if (searchParams.get('error_description')) {
+        errorMsg = searchParams.get('error_description');
+      }
+    }
+
+    if (isSignup) {
+      setShowVerificationSuccess(true);
+      // Clean query parameters from URL
+      window.history.replaceState(null, null, window.location.pathname);
+    } else if (errorMsg) {
+      setVerificationError(errorMsg.replace(/\+/g, ' '));
+      window.history.replaceState(null, null, window.location.pathname);
+    }
+  }, []);
+
   // Sync theme to localStorage
   useEffect(() => {
     localStorage.setItem('theme', theme);
@@ -337,7 +379,7 @@ export default function App() {
         setUser(data.user);
         toast.success('Welcome back!');
       } else {
-        setSuccessMsg('Registration successful! Please login.');
+        setSuccessMsg('Registration successful! Please check your email to verify your account before logging in.');
         setAuthMode('login');
         setPassword('');
       }
@@ -1107,6 +1149,59 @@ export default function App() {
           </section>
         </div>
       </main>
+
+      {/* Verification Success Modal */}
+      {showVerificationSuccess && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div className={`w-full max-w-md border rounded-2xl shadow-2xl p-8 text-center transition-all duration-300 ${
+            theme === 'dark' ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-950 shadow-xl'
+          }`}>
+            <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/30 rounded-full flex items-center justify-center text-emerald-400 mx-auto mb-5 shadow-lg shadow-emerald-500/10">
+              <Bell className="w-8 h-8" />
+            </div>
+            <h2 className={`text-2xl font-bold tracking-tight mb-3 ${theme === 'dark' ? 'text-white' : 'text-slate-950'}`}>
+              Welcome to Schedule Notifier! 🎉
+            </h2>
+            <p className={`text-sm mb-6 leading-relaxed ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+              Thank you for registering in **Schedule Notifier**. Your email has been verified successfully. Your account is now active and ready to use.
+            </p>
+            <button
+              onClick={() => {
+                setShowVerificationSuccess(false);
+                setAuthMode('login');
+              }}
+              className="w-full bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-medium py-3 rounded-lg shadow-lg shadow-indigo-600/20 transition-all duration-150"
+            >
+              Proceed to Sign In
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Verification Error Modal */}
+      {verificationError && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div className={`w-full max-w-md border rounded-2xl shadow-2xl p-8 text-center transition-all duration-300 ${
+            theme === 'dark' ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-950 shadow-xl'
+          }`}>
+            <div className="w-16 h-16 bg-red-500/10 border border-red-500/30 rounded-full flex items-center justify-center text-red-400 mx-auto mb-5 shadow-lg shadow-red-500/10">
+              <AlertCircle className="w-8 h-8" />
+            </div>
+            <h2 className={`text-2xl font-bold tracking-tight mb-3 ${theme === 'dark' ? 'text-white' : 'text-slate-950'}`}>
+              Verification Failed
+            </h2>
+            <p className={`text-sm mb-6 leading-relaxed ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+              {verificationError || "The verification link is invalid or has expired. Please try registering again."}
+            </p>
+            <button
+              onClick={() => setVerificationError('')}
+              className="w-full bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-white font-medium py-3 rounded-lg transition-all duration-150"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
 
       <ToastContainer position="bottom-right" theme={theme === 'dark' ? 'dark' : 'light'} />
     </div>
